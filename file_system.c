@@ -166,3 +166,37 @@ int allocate_file(char file_name[8])
 }
 
 
+
+void set_file_size(int file_num, int file_size)
+{
+    // Find out how many blocks will we need.
+    int number_of_blocks = file_size/BLOCKSIZE;
+    if(file_size%BLOCKSIZE != 0){
+        number_of_blocks += 1;
+    }
+
+    int block_num = inodes[file_num].first_block;
+    
+    // Grow the file blocks as much as needed.
+    while(number_of_blocks > 0){
+        // Checking the next block.
+        int next_block = blocks[block_num].next_block;
+        if(next_block == -2){
+            // If there is no other block allocated next, we setting it up right now.
+            int em_block = find_empty_block();
+            blocks[block_num].next_block = em_block;
+            blocks[em_block].next_block = -2;
+        }
+        block_num = blocks[block_num].next_block;
+        number_of_blocks--;
+    }
+
+    // // Check For shrinking
+    // shorten_file(file_num);
+
+    blocks[block_num].next_block = -2;
+}
+
+
+void write_byte(int file_num, int offset, char *data);
+

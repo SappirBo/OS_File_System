@@ -4,6 +4,8 @@
 
 #pragma once
 
+#define BLOCKSIZE 512
+
 /**
  * @brief Super Block Struct, it contains 3 parameters:
  *      - num_inodes = amount of inodes.
@@ -39,7 +41,7 @@ struct inode
 struct block
 {
     int next_block;
-    char data[512];
+    char data[BLOCKSIZE];
 };
 
 // Change to mymkfs
@@ -64,4 +66,12 @@ int find_empty_inode();
 int find_empty_block();
 
 
+// return filenumber
 int allocate_file(char file_name[8]);
+
+void set_file_size(int file_num, int file_size);
+void write_byte(int file_num, int offset, char *data);
+
+
+
+
