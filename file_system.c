@@ -165,6 +165,20 @@ int allocate_file(char file_name[8])
     return em_inode;
 }
 
+/**
+ * @brief Helper for set_file_size 
+ *      -> after finish resetting the size, we will look for empty blocks that we can reuse.
+ * @param block_num  = the last block index we used in "set_file_size".
+ */
+void shorten_file(int block_num)
+{
+    int num = blocks[block_num].next_block;
+    if(num >= 0){
+        shorten_file(num);
+    }
+    blocks[block_num].next_block = -1;
+
+}
 
 
 void set_file_size(int file_num, int file_size)
@@ -191,8 +205,8 @@ void set_file_size(int file_num, int file_size)
         number_of_blocks--;
     }
 
-    // // Check For shrinking
-    // shorten_file(file_num);
+    // Check For shrinking
+    shorten_file(block_num);
 
     blocks[block_num].next_block = -2;
 }

@@ -69,7 +69,14 @@ int find_empty_block();
 // return filenumber
 int allocate_file(char file_name[8]);
 
+/**
+ * @brief Set / Reset the size of the file.
+ * 
+ * @param file_num - the number of the inode that hold this file.
+ * @param file_size - the new size we want to allocate to this file.
+ */
 void set_file_size(int file_num, int file_size);
+
 void write_byte(int file_num, int offset, char *data);
 
 
