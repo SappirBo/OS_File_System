@@ -30,7 +30,7 @@ void create_fd(int size_bytes)
     for(i=0; i<sb.num_inodes; i++){
         inodes[i].size = -1;
         inodes[i].first_block = -1;
-        strcpy(inodes[i].name,"Inode");
+        strcpy(inodes[i].name,"____");
     } // init inodes.
 
     blocks = malloc(sizeof(struct block) * sb.num_blocks);
@@ -46,6 +46,11 @@ void mount_fs()
 {
     FILE *file;
     file = fopen("fd_data.txt","r");
+
+    if(file == NULL){
+        perror("No Such File!\nOUT.\n");
+        exit(1);
+    }
     
     // Reading the Super Block Info
     fread(&sb,sizeof(struct super_block) ,1 ,file);
@@ -54,7 +59,7 @@ void mount_fs()
     inodes = malloc(sizeof(struct inode) * sb.num_inodes);
     blocks = malloc(sizeof(struct block) * sb.num_blocks);
 
-    // Reading the blocks and the inodes data.
+    // Reading the blocks and the inodes 
     fread(inodes,sizeof(struct inode), sb.num_inodes,file);
     fread(blocks,sizeof(struct block), sb.num_blocks,file);
 
@@ -116,5 +121,48 @@ void fd_info()
 }
 
 
+/**
+ * @brief for find empty inode.
+ * @return int - If the operation was successful it returns the empty inode index, else it returns -1 (something is wrong/ no empty inode).
+ */
+int find_empty_inode()
+{
+    int i;
+    for(i=0; i<sb.num_inodes; i++){
+        if(inodes[i].first_block == -1){
+            return i;
+        }
+    }
+    return -1;
+}
+
+/**
+ * @brief finds empty block in the block array.
+ * @return int -> If the operation was successful it returns the empty block index,  else it returns -1 (something is wrong/ no empty block).
+ */
+int find_empty_block()
+{
+    int i;
+    for(i=0; i<sb.num_blocks; i++){
+        if(blocks[i].next_block == -1){
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+int allocate_file(char file_name[8])
+{
+    // Find empty inode and empty block.
+    int em_inode = find_empty_inode();
+    int em_block = find_empty_block();
+
+    inodes[em_inode].first_block = em_block;
+    strcpy(inodes[em_inode].name,file_name);
+    blocks[em_block].next_block = -2;
+
+    return em_inode;
+}
 
 

@@ -48,3 +48,20 @@ void mount_fs(); // load file system.
 void sync_fs(); // write in the file system.
 
 void fd_info(); // For printing fd information.
+
+/**
+ * @brief for find empty inode.
+ * 
+ * @return int -> empty inode index.
+ */
+int find_empty_inode(); 
+
+/**
+ * @brief finds empty block in the block array.
+ * 
+ * @return int -> empty block index.
+ */
+int find_empty_block();
+
+
+int allocate_file(char file_name[8]);
