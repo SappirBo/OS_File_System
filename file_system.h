@@ -46,3 +46,5 @@ struct block
 void create_fd(int size_bytes); // initialize new file system.
 void mount_fs(); // load file system.
 void sync_fs(); // write in the file system.
+
+void fd_info(); // For printing fd information.
