@@ -8,9 +8,11 @@
 
 int main()
 {
-    create_fd(1024*5);
+    // create_fd(1024*2);
+    // sync_fs();
+    mount_fs();
     fd_info();
-    sync_fs();
-    printf("Done\n");
+
+    printf("Done.\nOUT\n");
     return 0;
 }

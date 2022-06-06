@@ -41,7 +41,26 @@ void create_fd(int size_bytes)
 } 
 
 
-void mount_fs(); // load file system.
+// load file system.
+void mount_fs()
+{
+    FILE *file;
+    file = fopen("fd_data.txt","r");
+    
+    // Reading the Super Block Info
+    fread(&sb,sizeof(struct super_block) ,1 ,file);
+    
+    // Creat new Inodes and Blocks Arrays.
+    inodes = malloc(sizeof(struct inode) * sb.num_inodes);
+    blocks = malloc(sizeof(struct block) * sb.num_blocks);
+
+    // Reading the blocks and the inodes data.
+    fread(inodes,sizeof(struct inode), sb.num_inodes,file);
+    fread(blocks,sizeof(struct block), sb.num_blocks,file);
+
+    fclose(file);
+
+} 
 
 // write in the file system.
 void sync_fs()
