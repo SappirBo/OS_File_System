@@ -10,5 +10,10 @@ file_system.o: file_system.c file_system.h
 	gcc -c file_system.c
 
 .PHONY: clean#.PHONY means that clean is not a file.
+
+# This clean will clear all the o/a/main files but not the txt files.
 clean:
-	rm -f *.o *.a  main fd_data.txt
+	rm -f *.o *.a  main
+# This Clean is for all the Files.
+cleanAll:
+	rm -f *.o *.a  main *.txt

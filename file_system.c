@@ -211,6 +211,29 @@ void set_file_size(int file_num, int file_size)
     blocks[block_num].next_block = -2;
 }
 
+int get_block_number(int file_num, int offset){
+    int block_num = inodes[file_num].first_block;
+    int tmp = offset; 
+    while (tmp > 0)
+    {
+        block_num = blocks[block_num].next_block;
+        tmp--;
+    }
+    return block_num;
+    
+}
 
-void write_byte(int file_num, int offset, char *data);
+
+void write_byte(int file_num, int pos, char *data)
+{
+    // Find the right block.
+    int block = pos/BLOCKSIZE;
+
+    //Get this block's number.
+    int block_num = get_block_number(file_num,block);
+
+    int offset = pos % BLOCKSIZE;
+
+    blocks[block_num].data[offset] = (*data);
+}
 
