@@ -19,16 +19,17 @@ int main()
 
     print_fd();
     printf("\n");
-    fs_info();
+    // fs_info();
     printf("\n");
 
     int w = myopen("file1",O_WRONLY);
     int r = myopen("file2",O_RDONLY);
     int wr = myopen("file3",O_RDWR);
 
-    printf("Locations in FD: file 1 = %d, file 2 = %d, file 3 = %d\n",w,r,wr);
     printf("\n");
-    print_fd();
+    printf("Locations in FD: file 1 = %d, file 2 = %d, file 3 = %d\n",w,r,wr);
+    // printf("\n");
+    // print_fd();
     // mount_fs();
     // int first = allocate_file("first");
     // set_file_size(first, 1024*5);
@@ -44,7 +45,7 @@ int main()
     // sync_fs();
     // fs_info();
 
-
+    printf("\n");
     printf("Done.\nOUT\n");
     return 0;
 }

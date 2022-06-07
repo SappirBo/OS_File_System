@@ -167,11 +167,12 @@ int find_empty_block()
  * @return int  -> number of the inode, -1 in case of failure.
  */
 int find_file_inode(const char *file_name){
-        int i;
-    for(i=0; i<sb.num_inodes; i++){
-        if(strcmp(inodes[i].name,file_name)){
+    int i=0;
+    while(i<sb.num_inodes){
+        if(!strcmp(inodes[i].name,file_name)){
             return i;
         }
+        i++;
     }
     return -1;
 }
@@ -333,6 +334,7 @@ int myopen(const char *pathname, int flags){
         }
         return -1;
     }
+    // Flag for getting Existing file.
     else if(flags == O_RDONLY || flags == O_WRONLY || flags == O_RDWR){
         if(fd_size == 0){
             perror("No File found. Try diffrent pathname.\n");
@@ -355,6 +357,10 @@ int myopen(const char *pathname, int flags){
     }
 }
 
+
+// int myclose(int myfd){
+
+// }
 
 
 
