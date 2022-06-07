@@ -1,12 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h> 
 #include "file_system.h"
 
 // init for the structs.
 struct super_block sb;
 struct inode *inodes;
 struct block *blocks; 
+
+// init for the file descriptor struct
+struct myopenfile *fd;
+int fd_size;
 
 
 /**
@@ -38,6 +43,12 @@ void create_fd(int size_bytes)
         blocks[i].next_block = -1;
     } // init blocks.
 
+
+    // Setting up the file descriptor for first time.
+    fd = malloc(sizeof(struct myopenfile));
+    fd[0].cursor = 0;
+    fd[0].file_node = 0;
+    fd_size = 0;
 } 
 
 
@@ -68,10 +79,10 @@ void mount_fs()
 } 
 
 // write in the file system.
-void sync_fs()
+void sync_fs(const char *str)
 {
     FILE *file;
-    file = fopen("fd_data.txt","w+");
+    file = fopen(str,"w+");
     int i;
 
     // Super Block
@@ -91,14 +102,13 @@ void sync_fs()
 }
 
 
-
 /**
  * @brief Print the File System Information:
  *      1. Super Block info.
  *      2. Inodes Info.
  *      3. Blocks Info.
  */
-void fd_info()
+void fs_info()
 {
     int i;
 
@@ -151,8 +161,29 @@ int find_empty_block()
     return -1;
 }
 
+/**
+ * @brief find the currect inode by the file name.
+ * @param file_name -> name of the file we look for.
+ * @return int  -> number of the inode, -1 in case of failure.
+ */
+int find_file_inode(const char *file_name){
+        int i;
+    for(i=0; i<sb.num_inodes; i++){
+        if(strcmp(inodes[i].name,file_name)){
+            return i;
+        }
+    }
+    return -1;
+}
 
-int allocate_file(char file_name[8])
+/**
+ * @brief Function for creating and allocate new file in are Hard Disk.
+ * 
+ * @param file_name -> Name Of the file we want to create.
+ * @return int -> the inode contains this new file.
+ */
+ // before TEST***********char file_name[8]
+int allocate_file(const char *file_name)
 {
     // Find empty inode and empty block.
     int em_inode = find_empty_inode();
@@ -236,4 +267,115 @@ void write_byte(int file_num, int pos, char *data)
 
     blocks[block_num].data[offset] = (*data);
 }
+
+//////////////////////////////////////////////////////////////////////////////////
+//                   IMPLEMENTION OF TASK 7.
+// This part holds the functions Signatures as given in the task info.
+//////////////////////////////////////////////////////////////////////////////////
+
+
+void print_fd(){
+    printf("File Descriptor: size = %d\n",fd_size);
+    printf("nodes: ");
+    int i;
+    for(i=0; i<fd_size; i++){
+        printf("->(fd = %d,File = %s) ",fd[i].file_node , inodes[fd[i].file_node].name);
+    }
+    printf("\n");
+}
+
+void mymkfs(int bytes){
+    FILE *file;
+    file = fopen("myFile.txt","w+");
+    for(int i=0; i<bytes; i++){
+        fwrite(" ",sizeof(char) ,1 ,file);
+    }
+    create_fd(bytes);
+    printf("mymkfs: Hard Disk created -> myFile.txt\n");
+}
+
+int mymount(const char *source, const char *target,const char *filesystemtype, unsigned long mountflags, const void *data)
+{   
+    sync_fs(source);
+    printf("mymount: File System created, name: %s\n", source);
+}
+
+/**
+ * @brief open file from are Hard Disk
+ * 
+ * @param pathname = name of the path / file we look for. 
+ * @param flags: 1. O_CREAT = Create new file.
+ *               2. O_RDONLY = Read only.
+ *               3. O_WRONLY = Write only.
+ *               4. O_RDWR = Read & Write.
+ * @return int = the number of this file in the File Descriptor.
+ */
+int myopen(const char *pathname, int flags){
+    // TODO -> Check PathName.
+    // Flag for creating new file.
+    if(flags == O_CREAT){
+        if(fd_size == 0){
+            int inode_num = allocate_file(pathname);
+            int fd_location = fd_size;
+            fd[fd_location].file_node =inode_num;
+            fd[fd_location].cursor = 0;
+            fd_size +=1;
+            return fd_location;
+        }
+        else{
+            int inode_num = allocate_file(pathname);
+            fd = realloc(fd , sizeof(struct myopenfile)*(fd_size +1));
+            int fd_location = fd_size;
+            fd_size +=1;
+            fd[fd_location].file_node =inode_num;
+            fd[fd_location].cursor = 0;
+            return fd_location;
+        }
+        return -1;
+    }
+    else if(flags == O_RDONLY || flags == O_WRONLY || flags == O_RDWR){
+        if(fd_size == 0){
+            perror("No File found. Try diffrent pathname.\n");
+        }else{
+            int inode_num = find_file_inode(pathname);
+            if (inode_num == -1){
+                perror("No File found. Try diffrent pathname.\n");
+            }else{
+                int i;
+                for(i=0; i<fd_size; i++){
+                    if(fd[i].file_node == inode_num){
+                        return i;
+                    }
+                }
+                return -1;
+            }
+        }
+    }else{
+        return -1;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

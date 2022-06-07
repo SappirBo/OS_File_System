@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h> 
 
 #pragma once
 
@@ -26,8 +27,7 @@ struct super_block
  *         It contain name of the file and pointer to the first block.
  *         Size = 16 Bytes (2 Integers and 8 Chars).
  */
-struct inode
-{
+struct inode{
     int size;
     int first_block;
     char name[8];
@@ -38,18 +38,21 @@ struct inode
  *        it has 512 bytes string for data and pointer to the next block.
  *        Size  = 516 bytes (4 bytes for one integer and 512 bytes for 512 chars).
  */
-struct block
-{
+struct block{
     int next_block;
     char data[BLOCKSIZE];
 };
 
-// Change to mymkfs
+struct myopenfile{
+    int file_node;
+    int cursor;
+};
+
 void create_fd(int size_bytes); // initialize new file system.
 void mount_fs(); // load file system.
-void sync_fs(); // write in the file system.
+void sync_fs(const char *str); // write in the file system.
 
-void fd_info(); // For printing fd information.
+void fs_info(); // For printing fd information.
 
 /**
  * @brief for find empty inode.
@@ -67,7 +70,7 @@ int find_empty_block();
 
 
 // return filenumber
-int allocate_file(char file_name[8]);
+int allocate_file(const char *file_name);
 
 /**
  * @brief Set / Reset the size of the file.
@@ -78,6 +81,43 @@ int allocate_file(char file_name[8]);
 void set_file_size(int file_num, int file_size);
 
 void write_byte(int file_num, int offset, char *data);
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//                   IMPLEMENTION OF TASK 7.
+// This part holds the functions Signatures as given in the task info.
+//////////////////////////////////////////////////////////////////////////////////
+
+void print_fd();
+
+void mymkfs(int bytes);
+
+int mymount(const char *source, const char *target,const char *filesystemtype, unsigned long mountflags, const void *data);
+
+int myopen(const char *pathname, int flags);
+
+int myclose(int myfd);
+
+size_t myread(int myfd, void *buf, size_t count);
+
+size_t mywrite(int myfd, const void *buf, size_t count);
+
+// off_t mylseek(int myfd, off_t offset, int whence);
+
+// myDIR *myopendir(const char *name);
+
+// struct mydirent *myreaddir(myDIR *dirp);
+
+// int myclosedir(myDIR *dirp);
+
+
+
+
+
+
+
+
+
 
 
 
