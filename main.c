@@ -39,13 +39,15 @@ int main()
 
     // Test 4: Using myclose to close file2. 
     printf("\n");
-    printf("Test4: Closing file 2 and Creating file4 (Exppecting it will be allocate where file2 was).\n");
+    printf("Test4: Closing file 2 and Creating file4 (Expecting it will be allocate where file2 was and file2 location now will be -1).\n");
     if( myclose(f2) < 0 ){
         perror("Close Failed\n");
     }
     int f4 = myopen("file4",O_CREAT);
     int f5 = myopen("file5",O_CREAT);
-    print_fd();
+    f2 = myopen("file2",O_RDWR);
+    printf("Locations in FD: file 4 = %d, file 5 = %d, file 2 = %d\n",f4,f5,f2);
+    // print_fd();
     printf("\n");
 
     sync_fs("myFile.txt");

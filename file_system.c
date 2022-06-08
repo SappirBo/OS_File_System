@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h> 
+#include <sys/types.h>
+#include <unistd.h>
 #include "file_system.h"
 
 // init for the structs.
@@ -308,10 +310,11 @@ void write_byte(int file_num, int pos, char *data)
 
 void print_fd(){
     printf("File Descriptor: size = %d\n",fd_size);
-    printf("nodes: ");
+    printf("nodes:");
     int i;
     for(i=0; i<fd_size; i++){
-        printf("->(fd = %d,File = %s) ",fd[i].file_node , inodes[fd[i].file_node].name);
+        printf(" -> (fd = %d,File = %s, Inode = %d) ",i,inodes[fd[i].file_node].name,fd[i].file_node );
+        if(i%4 == 0 && i!=0){printf("\n      ");}
     }
     printf("\n");
 }
@@ -386,6 +389,10 @@ int myclose(int myfd){
         fd_size--;
         return 0;
     }
+}
+
+size_t myread(int myfd, void *buf, size_t count){
+
 }
 
 
