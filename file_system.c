@@ -299,19 +299,18 @@ void write_byte(int file_num, int pos, char *data)
     blocks[block_num].data[offset] = (*data);
 }
 
-void * read_byte(int file_num, int pos, int length){
+void * read_byte(int file_num, int pos, size_t length){
     // Find the right block.
     int block = pos/BLOCKSIZE;
-
     //Get this block's number.
     int block_num = get_block_number(file_num,block);
-
     int offset = pos % BLOCKSIZE;
     
-    void *data;
+    char *data;
+    data = malloc(sizeof(char)* length);
     int i;
     for(i=0; i<length; i++){
-        data += blocks[block_num].data[offset+i];
+        data[i] = (char) blocks[block_num].data[offset+i];
     }
     return data;
 }
@@ -417,7 +416,9 @@ int myclose(int myfd){
 ssize_t myread(int myfd, void *buf, size_t count){
     int inode_num = fd[myfd].file_node;
     int cursor = fd[myfd].cursor;
-    buf = read_byte(inode_num, cursor, (int) count);
+
+    strcpy(buf,read_byte(inode_num, cursor, count));
+
     return -1;
 }
 

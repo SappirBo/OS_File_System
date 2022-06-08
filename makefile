@@ -15,5 +15,5 @@ file_system.o: file_system.c file_system.h
 clean:
 	rm -f *.o *.a  main
 # This Clean is for all the Files.
-cleanAll:
+cleanall:
 	rm -f *.o *.a  main *.txt
