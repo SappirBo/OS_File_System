@@ -322,12 +322,12 @@ void * read_byte(int file_num, int pos, size_t length){
 
 
 void print_fd(){
-    printf("File Descriptor: size = %d\n",fd_size);
-    printf("nodes:");
+    printf("       File Descriptor: size = %d\n",fd_size);
+    printf("       nodes:");
     int i;
     for(i=0; i<fd_size; i++){
-        printf(" -> (fd = %d,File = %s, Inode = %d) ",i,inodes[fd[i].file_node].name,fd[i].file_node );
-        if(i%4 == 0 && i!=0){printf("\n      ");}
+        printf(" -> (fd = %d,File = '%s', Inode = %d) ",i,inodes[fd[i].file_node].name,fd[i].file_node );
+        if(i%4 == 0 && i!=0){printf("\n             ");}
     }
     printf("\n");
 }
@@ -339,13 +339,13 @@ void mymkfs(int bytes){
         fwrite(" ",sizeof(char) ,1 ,file);
     }
     create_fs(bytes);
-    printf("mymkfs: Hard Disk created -> myFile.txt\n");
+    printf("       Hard Disk created -> myFile.txt\n");
 }
 
 int mymount(const char *source, const char *target,const char *filesystemtype, unsigned long mountflags, const void *data)
 {   
     sync_fs(source);
-    printf("mymount: File System created, name: %s\n", source);
+    printf("       File System created, name: %s\n", source);
 }
 
 /**
@@ -413,18 +413,27 @@ int myclose(int myfd){
     }
 }
 
-ssize_t myread(int myfd, void *buf, size_t count){
-    int inode_num = fd[myfd].file_node;
-    int cursor = fd[myfd].cursor;
+ssize_t myread(int myfd, void *buf, size_t count){\
+    // Checking for valid fd ID and that the fd have some files in it.
+    if(fd[myfd].file_node == -1 || fd_size == 0){return -1;}
+    // Checking for Right permission.
+    else if(fd[myfd].permission == 0 || fd[myfd].permission == 2){
+        int inode_num = fd[myfd].file_node;
+        int cursor = fd[myfd].cursor;
 
-    strcpy(buf,read_byte(inode_num, cursor, count));
-
-    return -1;
+        strcpy(buf,read_byte(inode_num, cursor, count));
+        return strlen(buf);
+    }
+    else{
+        // In case something went wrong 
+        return -1;
+    }
 }
 
 ssize_t mywrite(int myfd, const void *buf, size_t count){
-    // Checking for Right permission and right fd ID.
+    // Checking for valid fd ID and that the fd have some files in it.
     if(fd[myfd].file_node == -1 || fd_size == 0){return -1;}
+    // Checking for Right permission.
     else if(fd[myfd].permission == 0 || fd[myfd].permission == 2){
         int inode_num = fd[myfd].file_node;
         int cursor = fd[myfd].cursor;
@@ -436,6 +445,7 @@ ssize_t mywrite(int myfd, const void *buf, size_t count){
         }
         return count;
     }
+    // In case something went wrong 
     return -1;
 }
 
