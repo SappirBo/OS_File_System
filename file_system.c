@@ -21,7 +21,7 @@ int fd_size;
  *        Need to change the name to "mymkfs".
  * @param size_bytes -> size of the fd we create (in bytes).
  */
-void create_fd(int size_bytes)
+void create_fs(int size_bytes)
 {
     // setting size for the inodes, 10% of the total size.
     int inodes_size = (int) size_bytes/10;
@@ -52,11 +52,9 @@ void create_fd(int size_bytes)
     for(i=0;i<10000; i++){
         fd[i].file_node = -1;
         fd[i].cursor = -1;
+        fd[i].permission = -1;
     }
     fd_size = 0;
-    // fd[0].cursor = 0;
-    // fd[0].file_node = 0;
-    // fd_size = 0;
 } 
 
 
@@ -245,7 +243,6 @@ void shorten_file(int block_num)
 
 }
 
-
 void set_file_size(int file_num, int file_size)
 {
     // Find out how many blocks will we need.
@@ -302,6 +299,23 @@ void write_byte(int file_num, int pos, char *data)
     blocks[block_num].data[offset] = (*data);
 }
 
+void * read_byte(int file_num, int pos, int length){
+    // Find the right block.
+    int block = pos/BLOCKSIZE;
+
+    //Get this block's number.
+    int block_num = get_block_number(file_num,block);
+
+    int offset = pos % BLOCKSIZE;
+    
+    void *data;
+    int i;
+    for(i=0; i<length; i++){
+        data += blocks[block_num].data[offset+i];
+    }
+    return data;
+}
+
 //////////////////////////////////////////////////////////////////////////////////
 //                   IMPLEMENTION OF TASK 7.
 // This part holds the functions Signatures as given in the task info.
@@ -325,7 +339,7 @@ void mymkfs(int bytes){
     for(int i=0; i<bytes; i++){
         fwrite(" ",sizeof(char) ,1 ,file);
     }
-    create_fd(bytes);
+    create_fs(bytes);
     printf("mymkfs: Hard Disk created -> myFile.txt\n");
 }
 
@@ -365,10 +379,18 @@ int myopen(const char *pathname, int flags){
                 perror("No File found. Try diffrent pathname.\n");
             }
             else{
-                return find_index_of_inode_in_fd(inode_num);
+                // Get the index of this file in the FD.
+                int index = find_index_of_inode_in_fd(inode_num);
+                // Setup the right permission.
+                if(flags == O_WRONLY){fd[index].permission = 0;}
+                else if(flags == O_RDONLY){fd[index].permission = 1;}
+                else if(flags == O_RDWR){fd[index].permission = 2;}
+                // Return the index of this file in the FD.
+                return index;
             }
         }
     }else{
+        // Something went wrong.
         return -1;
     } 
 }
@@ -385,16 +407,36 @@ int myclose(int myfd){
     }
     else{
         fd[myfd].file_node = -1;
-        fd[myfd].cursor = 0;
+        fd[myfd].cursor = -1;
+        fd[myfd].permission = -1;
         fd_size--;
         return 0;
     }
 }
 
-size_t myread(int myfd, void *buf, size_t count){
-
+ssize_t myread(int myfd, void *buf, size_t count){
+    int inode_num = fd[myfd].file_node;
+    int cursor = fd[myfd].cursor;
+    buf = read_byte(inode_num, cursor, (int) count);
+    return -1;
 }
 
+ssize_t mywrite(int myfd, const void *buf, size_t count){
+    // Checking for Right permission and right fd ID.
+    if(fd[myfd].file_node == -1 || fd_size == 0){return -1;}
+    else if(fd[myfd].permission == 0 || fd[myfd].permission == 2){
+        int inode_num = fd[myfd].file_node;
+        int cursor = fd[myfd].cursor;
+        size_t i;
+        char *data;
+        data = (char*) buf;
+        for(i=0; i<count; i++){
+            write_byte(inode_num, cursor+i, &data[i]);
+        }
+        return count;
+    }
+    return -1;
+}
 
 
 

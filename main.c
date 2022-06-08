@@ -47,20 +47,25 @@ int main()
     int f5 = myopen("file5",O_CREAT);
     f2 = myopen("file2",O_RDWR);
     printf("Locations in FD: file 4 = %d, file 5 = %d, file 2 = %d\n",f4,f5,f2);
-    // print_fd();
+    printf("\n");
+ 
+
+    // Test5: Write And Read from file.
+    printf("Test5: Write to file1 and file3 (permission write only and read and write only), Try to write to file4 (that have read only permission).\n");
+    f4 = myopen("file4",O_RDONLY);
+    int a = mywrite(f1,"Hello World\n",strlen("Hello World\n"));
+    int b = mywrite(f3,"Hello World\n",strlen("Hello World\n"));
+    int c = mywrite(f4,"Hello World\n",strlen("Hello World\n"));
+    printf("Data Written to: file1: %d Bytes, file3: %d Bytes, file4: %d Bytes\n",a,b,c);
     printf("\n");
 
+
+
+
+
+
     sync_fs("myFile.txt");
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     // mount_fs();
     // int first = allocate_file("first");
     // set_file_size(first, 1024*5);

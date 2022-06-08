@@ -44,13 +44,18 @@ struct block{
     int next_block;
     char data[BLOCKSIZE];
 };
-
+/**
+ * @brief This is a singal file in the File Discriptor,
+ *        Each File have the inode number of that file, cursor (Starts as 0),
+ *        And permission: - 0 read only, 1 write only, 2 read and write, -1 before init.       
+ */ 
 struct myopenfile{
     int file_node;
     int cursor;
+    int permission; // 
 };
 
-void create_fd(int size_bytes); // initialize new file system.
+void create_fs(int size_bytes); // initialize new file system.
 void mount_fs(); // load file system.
 void sync_fs(const char *str); // write in the file system.
 
@@ -84,6 +89,7 @@ void set_file_size(int file_num, int file_size);
 
 void write_byte(int file_num, int offset, char *data);
 
+void * read_byte(int file_num, int pos, int length);
 
 //////////////////////////////////////////////////////////////////////////////////
 //                   IMPLEMENTION OF TASK 7.
@@ -100,9 +106,9 @@ int myopen(const char *pathname, int flags);
 
 int myclose(int myfd);
 
-size_t myread(int myfd, void *buf, size_t count);
+ssize_t myread(int myfd, void *buf, size_t count);
 
-size_t mywrite(int myfd, const void *buf, size_t count);
+ssize_t mywrite(int myfd, const void *buf, size_t count);
 
 // off_t mylseek(int myfd, off_t offset, int whence);
 
