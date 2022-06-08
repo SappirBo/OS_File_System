@@ -45,10 +45,16 @@ void create_fd(int size_bytes)
 
 
     // Setting up the file descriptor for first time.
-    fd = malloc(sizeof(struct myopenfile));
-    fd[0].cursor = 0;
-    fd[0].file_node = 0;
+    // In the task description they said we can asume there are at most 10000 open.
+    fd = malloc(sizeof(struct myopenfile)*10000);
+    for(i=0;i<10000; i++){
+        fd[i].file_node = -1;
+        fd[i].cursor = -1;
+    }
     fd_size = 0;
+    // fd[0].cursor = 0;
+    // fd[0].file_node = 0;
+    // fd_size = 0;
 } 
 
 
@@ -177,6 +183,27 @@ int find_file_inode(const char *file_name){
     return -1;
 }
 
+int find_empty_fd(){
+    int i=0;
+    while(i<10000){
+        if(fd[i].file_node == -1){
+            return i;
+        }
+        i++;
+    }
+    return -1;
+}
+
+int find_index_of_inode_in_fd(int inode_num){
+    int i;
+    for(i=0; i<fd_size; i++){
+        if(fd[i].file_node == inode_num){
+            return i;
+        }
+    }
+    return -1;
+}
+
 /**
  * @brief Function for creating and allocate new file in are Hard Disk.
  * 
@@ -186,12 +213,16 @@ int find_file_inode(const char *file_name){
  // before TEST***********char file_name[8]
 int allocate_file(const char *file_name)
 {
+    char name[8];
+    for(int i=0; i<8; i++){
+        name[i] = file_name[i];
+    }
     // Find empty inode and empty block.
     int em_inode = find_empty_inode();
     int em_block = find_empty_block();
 
     inodes[em_inode].first_block = em_block;
-    strcpy(inodes[em_inode].name,file_name);
+    strcpy(inodes[em_inode].name,name);
     blocks[em_block].next_block = -2;
 
     return em_inode;
@@ -312,27 +343,14 @@ int mymount(const char *source, const char *target,const char *filesystemtype, u
  * @return int = the number of this file in the File Descriptor.
  */
 int myopen(const char *pathname, int flags){
-    // TODO -> Check PathName.
-    // Flag for creating new file.
+    // TODO: Check pathname validation.
     if(flags == O_CREAT){
-        if(fd_size == 0){
-            int inode_num = allocate_file(pathname);
-            int fd_location = fd_size;
-            fd[fd_location].file_node =inode_num;
-            fd[fd_location].cursor = 0;
-            fd_size +=1;
-            return fd_location;
-        }
-        else{
-            int inode_num = allocate_file(pathname);
-            fd = realloc(fd , sizeof(struct myopenfile)*(fd_size +1));
-            int fd_location = fd_size;
-            fd_size +=1;
-            fd[fd_location].file_node =inode_num;
-            fd[fd_location].cursor = 0;
-            return fd_location;
-        }
-        return -1;
+        int inode_num = allocate_file(pathname);
+        int index = find_empty_fd();
+        fd[index].file_node = inode_num;
+        fd[index].cursor = 0;
+        fd_size++;
+        return index;
     }
     // Flag for getting Existing file.
     else if(flags == O_RDONLY || flags == O_WRONLY || flags == O_RDWR){
@@ -342,25 +360,33 @@ int myopen(const char *pathname, int flags){
             int inode_num = find_file_inode(pathname);
             if (inode_num == -1){
                 perror("No File found. Try diffrent pathname.\n");
-            }else{
-                int i;
-                for(i=0; i<fd_size; i++){
-                    if(fd[i].file_node == inode_num){
-                        return i;
-                    }
-                }
-                return -1;
+            }
+            else{
+                return find_index_of_inode_in_fd(inode_num);
             }
         }
     }else{
         return -1;
-    }
+    } 
 }
 
-
-// int myclose(int myfd){
-
-// }
+/**
+ * @brief Function for close file in the File Descriptor. 
+ * 
+ * @param myfd - index number of the file we want to close (some id number you get from "open").
+ * @return int - 0 on succsses, -1 otherwise.
+ */
+int myclose(int myfd){
+    if(fd_size == 0 || fd[myfd].file_node == -1){
+        return -1;
+    }
+    else{
+        fd[myfd].file_node = -1;
+        fd[myfd].cursor = 0;
+        fd_size--;
+        return 0;
+    }
+}
 
 
 
