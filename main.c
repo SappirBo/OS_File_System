@@ -7,14 +7,13 @@
 
 int main()
 {   
-    
     char *data = "This is the data Iwant to add!\0";
     
     // Test 1 : Creating New File System (FS).
     printf("Test1: Creating new File System.\n");
     mymkfs(1024*16);
     mymount("myFile.txt", "","",0,"");
-    printf("\n");
+    printf("       --------------------------------------------------------------------------\n");
 
     // Test 2: Creating 3 new files in the FS using myopen.
     printf("Test2: Creating 3 files.\n");
@@ -22,7 +21,7 @@ int main()
     myopen("file2",O_CREAT);
     myopen("file3",O_CREAT);
     print_fd();
-    printf("\n");
+    printf("       --------------------------------------------------------------------------\n");
 
     // Test 3: Using myopen to get back index in the fd of the files we created.
     printf("\n");
@@ -31,7 +30,7 @@ int main()
     int f2 = myopen("file2",O_RDONLY);
     int f3 = myopen("file3",O_RDWR);
     printf("       Locations in FD: 'file1' = %d, 'file2' = %d, 'file3' = %d\n",f1,f2,f3);
-    printf("\n");
+    printf("       --------------------------------------------------------------------------\n");
 
 
     sync_fs("myFile.txt");
@@ -47,7 +46,8 @@ int main()
     int f5 = myopen("file5",O_CREAT);
     f2 = myopen("file2",O_RDWR);
     printf("       Locations in FD: 'file 4' = %d, 'file5' = %d, 'file2' = %d\n",f4,f5,f2);
-    printf("\n");
+    printf("       --------------------------------------------------------------------------\n");
+
  
 
     // Test5: Write And Read from file.
@@ -59,17 +59,26 @@ int main()
     int c = mywrite(f4,"Hello World\n",strlen("Hello World\n"));
     printf("       Data Written to: 'file1': %d Bytes, 'file3': %d Bytes, 'file4': %d Bytes.\n",a,b,c);
     printf("\n");
-    char *test = malloc(sizeof(char) * 12);
-    myread(f1,test, 12);
-    printf("\n       now read the content in file1: %s",test);
-
-
+    char *test = malloc(sizeof(char) * 24);
+    myread(f3,test, 12);
+    printf("\n       read the content in file3: %s",test);
+    printf("       --------------------------------------------------------------------------\n");
+    
+    // Test6: lseek Function.
+    int cursor;
+    printf("Test6: now we will use lseek to write to file3 once again, right where we stoped.\n");
+    cursor = mylseek(f3,11,SEEK_SET);
+    printf("       file 3 cursor at: %d",cursor);
+    b = mywrite(f3,"Hello World\n",strlen("Hello World\n"));
+    cursor = mylseek(f3,0,SEEK_SET);
+    myread(f3,test, 24);
+    printf("\n       read the content in file3: %s\n",test);
+    printf("       file 3 cursor at: %d",cursor);
 
 
 
 
     sync_fs("myFile.txt");
-
     printf("\n");
     // fs_info();
     printf("\n");

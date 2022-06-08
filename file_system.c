@@ -296,7 +296,11 @@ void write_byte(int file_num, int pos, char *data)
 
     int offset = pos % BLOCKSIZE;
 
-    blocks[block_num].data[offset] = (*data);
+    int i;
+    for(i=0; i<strlen(data); i++){
+        blocks[block_num].data[offset + i] = data[i];
+    }
+    inodes[file_num].size += (strlen(data));
 }
 
 void * read_byte(int file_num, int pos, size_t length){
@@ -422,6 +426,7 @@ ssize_t myread(int myfd, void *buf, size_t count){\
         int cursor = fd[myfd].cursor;
 
         strcpy(buf,read_byte(inode_num, cursor, count));
+        fd[myfd].cursor += strlen(buf);
         return strlen(buf);
     }
     else{
@@ -434,7 +439,7 @@ ssize_t mywrite(int myfd, const void *buf, size_t count){
     // Checking for valid fd ID and that the fd have some files in it.
     if(fd[myfd].file_node == -1 || fd_size == 0){return -1;}
     // Checking for Right permission.
-    else if(fd[myfd].permission == 0 || fd[myfd].permission == 2){
+    else if(fd[myfd].permission == 1 || fd[myfd].permission == 2){
         int inode_num = fd[myfd].file_node;
         int cursor = fd[myfd].cursor;
         size_t i;
@@ -442,7 +447,7 @@ ssize_t mywrite(int myfd, const void *buf, size_t count){
         data = (char*) buf;
         for(i=0; i<count; i++){
             write_byte(inode_num, cursor+i, &data[i]);
-        }
+        }      
         return count;
     }
     // In case something went wrong 
@@ -450,6 +455,29 @@ ssize_t mywrite(int myfd, const void *buf, size_t count){
 }
 
 
+// TODO: Check Valid Offset. 
+off_t mylseek(int myfd, off_t offset, int whence){
+    // Checking for valid fd ID and that the fd have some files in it.
+    if(fd[myfd].file_node == -1 || fd_size == 0){return -1;}
+    if(offset + inodes[fd[myfd].file_node].size < 0){return -1;}
+    if(whence == SEEK_CUR){
+        int current = fd[myfd].cursor;
+        current += offset;
+        fd[myfd].cursor = current;
+        return current;
+    }
+    else if(whence == SEEK_SET){
+        fd[myfd].cursor = offset;
+        return offset;
+    }
+    else if(whence == SEEK_END){
+        fd[myfd].cursor = offset + inodes[fd[myfd].file_node].size;
+        return fd[myfd].cursor;
+    }
+    else{
+        return -1;
+    }
+}
 
 
 
