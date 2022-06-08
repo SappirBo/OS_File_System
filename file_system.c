@@ -298,9 +298,9 @@ void write_byte(int file_num, int pos, char *data)
 
     int i;
     for(i=0; i<strlen(data); i++){
-        blocks[block_num].data[offset + i] = data[i];
+        blocks[block_num].data[offset+i] = data[i];
+        inodes[file_num].size++;
     }
-    inodes[file_num].size += (strlen(data));
 }
 
 void * read_byte(int file_num, int pos, size_t length){
@@ -426,13 +426,11 @@ ssize_t myread(int myfd, void *buf, size_t count){\
         int cursor = fd[myfd].cursor;
 
         strcpy(buf,read_byte(inode_num, cursor, count));
-        fd[myfd].cursor += strlen(buf);
+        fd[myfd].cursor = cursor + count;
         return strlen(buf);
     }
-    else{
-        // In case something went wrong 
-        return -1;
-    }
+    // In case something went wrong 
+    else{return -1;}
 }
 
 ssize_t mywrite(int myfd, const void *buf, size_t count){
@@ -448,6 +446,7 @@ ssize_t mywrite(int myfd, const void *buf, size_t count){
         for(i=0; i<count; i++){
             write_byte(inode_num, cursor+i, &data[i]);
         }      
+        fd[myfd].cursor = cursor+count;
         return count;
     }
     // In case something went wrong 

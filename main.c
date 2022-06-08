@@ -71,7 +71,7 @@ int main()
     printf("       file 3 cursor at: %d",cursor);
     b = mywrite(f3,"Hello World\n",strlen("Hello World\n"));
     cursor = mylseek(f3,0,SEEK_SET);
-    myread(f3,test, 24);
+    cursor = myread(f3,test, 24);
     printf("\n       read the content in file3: %s\n",test);
     printf("       file 3 cursor at: %d",cursor);
 
