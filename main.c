@@ -52,16 +52,17 @@ int main()
 
     // Test5: Write And Read from file.
     printf("Test5: Write 'Hello World' to file1 and file3 (permission write only and read and write only),\n");
-    printf("       Try to write to file4 (that have read only permission).\n");
+    printf("       Try to write to file4 (that have read only permission).\n\n");
     f4 = myopen("file4",O_RDONLY);
     int a = mywrite(f1,"Hello World\n",strlen("Hello World\n"));
     int b = mywrite(f3,"Hello World\n",strlen("Hello World\n"));
     int c = mywrite(f4,"Hello World\n",strlen("Hello World\n"));
     printf("       Data Written to: 'file1': %d Bytes, 'file3': %d Bytes, 'file4': %d Bytes.\n",a,b,c);
-    printf("\n");
+    printf("\n       Now we will use 'mylseek(f3,0,SEEK_SET)' to reset the cursor to the start, and print 12 bytes:\n");
     char *test = malloc(sizeof(char) * 24);
+    mylseek(f3,0,SEEK_SET);
     myread(f3,test, 12);
-    printf("\n       read the content in file3: %s",test);
+    printf("\n       read the content in file3: '%s'\n",test);
     printf("       --------------------------------------------------------------------------\n");
     
     // Test6: lseek Function.
