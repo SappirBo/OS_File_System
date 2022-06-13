@@ -38,6 +38,7 @@ void create_fs(int size_bytes)
         inodes[i].size = -1;
         inodes[i].first_block = -1;
         strcpy(inodes[i].name,"____");
+        inodes[i].inode_type = -1;
     } // init inodes.
 
     blocks = malloc(sizeof(struct block) * sb.num_blocks);
@@ -121,11 +122,11 @@ void fs_info()
     // Printing the Super Block Info.   
     printf("Super Block Info:\n");
     printf("    1. number of inodes = %d\n    2. number of blocks = %d\n    3. block size = %d\n",sb.num_inodes,sb.num_blocks,sb.block_size);
-    
+
     // Printing the Inodes Info.
     printf("Inodes Info:\n");
     for(i=0;i<sb.num_inodes;i++){
-        printf("    %d. Inode name: %s, Size: %d, First Block: %d\n",i ,inodes[i].name,inodes[i].size ,inodes[i].first_block);
+        printf("    %d. Inode name: %s, Size: %d, First Block: %d, Inode Type: %d\n",i ,inodes[i].name,inodes[i].size ,inodes[i].first_block,inodes[i].inode_type);
     }
 
     // Printing the Blocks Info.
@@ -222,6 +223,7 @@ int allocate_file(const char *file_name)
     int em_block = find_empty_block();
 
     inodes[em_inode].first_block = em_block;
+    inodes[em_inode].inode_type = 0;
     strcpy(inodes[em_inode].name,name);
     blocks[em_block].next_block = -2;
 
@@ -296,11 +298,14 @@ void write_byte(int file_num, int pos, char *data)
 
     int offset = pos % BLOCKSIZE;
 
-    int i;
-    for(i=0; i<strlen(data); i++){
-        blocks[block_num].data[offset+i] = data[i];
-        inodes[file_num].size++;
-    }
+    int i=0;
+    blocks[block_num].data[offset+i] = data[i];
+    inodes[file_num].size++;
+    // for(i=0; i<strlen(data); i++){
+    //     printf("i = %d, strlen(data): %d\n",i,strlen(data));
+    //     blocks[block_num].data[offset+i] = data[i];
+    //     inodes[file_num].size++;
+    // }
 }
 
 void * read_byte(int file_num, int pos, size_t length){
@@ -444,7 +449,7 @@ ssize_t mywrite(int myfd, const void *buf, size_t count){
         char *data;
         data = (char*) buf;
         for(i=0; i<count; i++){
-            write_byte(inode_num, cursor+i, &data[i]);
+            write_byte(inode_num, cursor+i, &(data[i]));
         }      
         fd[myfd].cursor = cursor+count;
         return count;
@@ -478,7 +483,28 @@ off_t mylseek(int myfd, off_t offset, int whence){
     }
 }
 
+myDIR *myopendir(const char *name){
+    int dir_inode = find_file_inode(name);
+    if (dir_inode == -1){
+        myDIR dr;
+        int inode_num = allocate_file(name);
+        int index = find_empty_fd();
+        fd[index].file_node = inode_num;
+        fd[index].cursor = 0;
+        fd_size++;
 
+        // Copy the DIR name.
+        strcpy(dr.d_name,name);
+        // Setting all the DIR's files (save their inode) to -1 -> for empty space.
+        int i;
+        for(i=0; i<MAX_DIR_FILES; i++){
+            dr.files[i] = -1;
+        }
+
+
+    }
+    return NULL;
+}
 
 
 

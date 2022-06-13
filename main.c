@@ -34,7 +34,6 @@ int main()
 
 
     sync_fs("myFile.txt");
-    
 
     // Test 4: Using myclose to close file2. 
     printf("\n");
@@ -62,12 +61,13 @@ int main()
     char *test = malloc(sizeof(char) * 24);
     mylseek(f3,0,SEEK_SET);
     myread(f3,test, 12);
-    printf("\n       read the content in file3: '%s'\n",test);
+    printf("\n       read the content in file3: %s\n",test);
     printf("       --------------------------------------------------------------------------\n");
-    
+
+
     // Test6: lseek Function.
     int cursor;
-    printf("Test6: now we will use lseek to write to file3 once again, right where we stoped.\n");
+    printf("Test6: now we will use lseek to write to file3 once again, right where we stoped (we rade 12 bytes so want overide bytes already written).\n");
     cursor = mylseek(f3,11,SEEK_SET);
     printf("       file 3 cursor at: %d",cursor);
     b = mywrite(f3,"Hello World\n",strlen("Hello World\n"));

@@ -7,7 +7,9 @@
 
 #pragma once
 
-#define BLOCKSIZE 512
+#define BLOCKSIZE 508
+#define PATH_MAX 256
+#define MAX_DIR_FILES 20
 
 /**
  * @brief Super Block Struct, it contains 3 parameters:
@@ -33,12 +35,13 @@ struct inode{
     int size;
     int first_block;
     char name[8];
+    int inode_type; // 0 for file, 1 for dir, -1 if not initialize.
 };
 
 /**
  * @brief Hard Disk Block, 
- *        it has 512 bytes string for data and pointer to the next block.
- *        Size  = 516 bytes (4 bytes for one integer and 512 bytes for 512 chars).
+ *        it has 508 bytes string for data and pointer to the next block.
+ *        Size  = 512 bytes (4 bytes for one integer and 512 bytes for 512 chars).
  */
 struct block{
     int next_block;
@@ -96,6 +99,37 @@ void * read_byte(int file_num, int pos, size_t length);
 // This part holds the functions Signatures as given in the task info.
 //////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief DIR struct, 
+ * 
+ */
+typedef struct myDIR {
+    char d_name[PATH_MAX+1];
+    int files[MAX_DIR_FILES];
+    int inode_num;
+    // struct mydirent ent;
+}myDIR;
+
+struct mydirent {
+    /* Always zero */
+    long d_ino;
+
+    /* File position within stream */
+    long d_off;
+
+    /* Structure size */
+    unsigned short d_reclen;
+
+    /* Length of name without \0 */
+    size_t d_namlen;
+
+    /* File type */
+    int d_type;
+
+    /* File name */
+    char d_name[PATH_MAX+1];
+};
+
 void print_fd();
 
 void mymkfs(int bytes);
@@ -112,7 +146,7 @@ ssize_t mywrite(int myfd, const void *buf, size_t count);
 
 off_t mylseek(int myfd, off_t offset, int whence);
 
-// myDIR *myopendir(const char *name);
+myDIR *myopendir(const char *name);
 
 // struct mydirent *myreaddir(myDIR *dirp);
 
