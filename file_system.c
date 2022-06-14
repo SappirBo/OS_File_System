@@ -143,7 +143,7 @@ void add_root(){
     for(i=0; i<MAX_DIR_FILES; i++){
         data += (char) root.files[i]; 
     }
-    data += (char) root.inode_num;
+    data = (char*) &root;
 
     for(i=0; i<sizeof(myDIR); i++){
         write_byte(FIRST_INODE,0, &data[i]);
@@ -625,29 +625,21 @@ myDIR *myopendir(const char *name){
     }
     // Check if this Dir exists.
     else if(inodes[dir_inode].inode_type == 1){
-        void* data ;
-        data = read_byte(dir_inode, 0, sizeof(myDIR));
-        // printf("%s\n\n",data);
+        myDIR* data ;
+        data = (char *) read_byte(dir_inode, 0, sizeof(myDIR));
         
     }   
-    // if (dir_inode == -1){
-    //     myDIR dr;
-    //     int inode_num = allocate_file(name);
-    //     int index = find_empty_fd();
-    //     fd[index].file_node = inode_num;
-    //     fd[index].cursor = 0;
-    //     fd_size++;
-
-    //     // Copy the DIR name.
-    //     strcpy(dr.d_name,name);
-    //     // Setting all the DIR's files (save their inode) to -1 -> for empty space.
-    //     int i;
-    //     for(i=0; i<MAX_DIR_FILES; i++){
-    //         dr.files[i] = -1;
-    //     }
-
-
-    // }
+    if(dir_inode == -1){
+        int dir_inode = allocate_dir(name);
+        myDIR dir;
+        strcpy(dir.d_name,name);
+        int i;
+        for(i=0; i<MAX_DIR_FILES; i++){
+            dir.files[i] = -1;
+        }
+        dir.inode_num = dir_inode;
+        
+    }
     return NULL;
 }
 
