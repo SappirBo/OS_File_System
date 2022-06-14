@@ -18,7 +18,8 @@ struct myopenfile *fd;
 int fd_size;
 
 //
-myDIR currDir;
+myDIR* currDir;
+
 
 
 /**
@@ -110,45 +111,6 @@ void sync_fs(const char *str)
     }
 
     fclose(file);
-}
-
-
-/**
- * @brief After creating new file system we will want to add it a root directory,
- * THis function will add root dir (mydirent) to the file system.
- */
-void add_root(){
-    if( inodes[FIRST_INODE].inode_type != -1 ){
-        printf("Init Failed.\n");
-        exit(1);
-    }
-    else if ( inodes[FIRST_INODE].inode_type == 1 && inodes[FIRST_INODE].name == "root"){
-        printf("root allready exists.\n");
-    }
-
-    // Creating new dir 'root' and setting it's values.
-    myDIR root;
-    int i;
-    int index = allocate_dir("root");
-    if(index != FIRST_INODE){
-        printf("Init Failed, the first inode avalibale is %d.\n",index);
-        exit(1);
-    }
-    strcpy(root.d_name , "root");
-    for(i=0; i<MAX_DIR_FILES; i++){
-        root.files[i] = -1 ; // Means there is no files there.
-    }
-    root.inode_num = index;
-    char* data = root.d_name;
-    for(i=0; i<MAX_DIR_FILES; i++){
-        data += (char) root.files[i]; 
-    }
-    data = (char*) &root;
-
-    for(i=0; i<sizeof(myDIR); i++){
-        write_byte(FIRST_INODE,0, &data[i]);
-    }
-    currDir = root;
 }
 
 
@@ -247,6 +209,75 @@ int find_index_of_inode_in_fd(int inode_num){
     }
     return -1;
 }
+
+/**
+ * @brief After creating new file system we will want to add it a root directory,
+ * THis function will add root dir (mydirent) to the file system.
+ */
+void add_root(){
+    if( inodes[FIRST_INODE].inode_type != -1 ){
+        printf("Init Failed.\n");
+        exit(1);
+    }
+    else if ( inodes[FIRST_INODE].inode_type == 1 && inodes[FIRST_INODE].name == "root"){
+        printf("root allready exists.\n");
+    }
+    int root_inode = allocate_dir("root");
+    myDIR* root;
+    strcpy(root->d_name,"root");
+    int i;
+    for(i=0; i<MAX_DIR_FILES; i++){
+        root->d_name[i] = -1;
+    }
+    root->inode_num = root_inode;
+    
+    char* data = (char*) root;
+
+    for(int i=0; i<sizeof(myDIR); i++){
+        write_byte(root_inode, i, data);
+    }
+
+    int index = find_empty_fd();
+    fd[index].file_node = root_inode;
+    fd[index].permission = 0;
+    fd_size++;
+    // // Creating new dir 'root' and setting it's values.
+    // myDIR *root;
+    // root->inode_num = FIRST_INODE;
+    // int i;
+    // int index = allocate_dir("root");
+    // if(index != FIRST_INODE){
+    //     printf("Init Failed, the first inode avalibale is %d.\n",index);
+    //     exit(1);
+    // }
+    // strcpy(root->d_name,"root");
+    // printf("HERE\n\n\n");
+    // for(i=0; i<MAX_DIR_FILES; i++){
+    //     root->files[i] = -1 ; // Means there is no files there.
+    // }
+    // printf("HERE\n\n\n");
+    // root->inode_num = index;
+
+    // char* data = (char*) root;
+
+    // for(i=0; i<sizeof(myDIR); i++){
+    //     write_byte(FIRST_INODE,i, data);
+    // }
+    // currDir = root;
+
+    // index = find_empty_fd();
+    // if(index != 0){
+    //     printf("Init Failed.\n");
+    //     exit(1);
+    // }
+//     fd[index].file_node = FIRST_INODE;
+//     fd[index].cursor = 0;
+//     fd[index].permission = 0;
+//     fd_size++;
+}
+
+
+
 
 /**
  * @brief Function for creating and allocate new file in are Hard Disk.
@@ -386,11 +417,11 @@ char * read_byte(int file_num, int pos, size_t length){
 //////////////////////////////////////////////////////////////////////////////////
 
 void print_curr_dir(){
-    printf("Directory Name: %s, Inode: %d,  Files:\n",currDir.d_name, currDir.inode_num);
+    printf("Directory Name: %s, Inode: %d,  Files:\n",currDir->d_name, currDir->inode_num);
     int i;
     for(i=0;i<MAX_DIR_FILES;i++){
-        if(currDir.files[i]!= -1){
-            printf("    %d. %s\n",i,inodes[currDir.files[i]].name);
+        if(currDir->files[i]!= -1){
+            printf("    %d. %s\n",i,inodes[currDir->files[i]].name);
         }
     }
 }
@@ -400,8 +431,12 @@ void print_fd(){
     printf("       nodes:");
     int i;
     for(i=0; i<fd_size; i++){
-        printf(" -> (fd = %d,File = '%s', Inode = %d) ",i,inodes[fd[i].file_node].name,fd[i].file_node );
-        if(i%4 == 0 && i!=0){printf("\n             ");}
+        if(i%3 == 0 && i!=0){printf("\n             ");}
+        if(inodes[fd[i].file_node].inode_type == 0){
+            printf(" -> [fd = %d, File = '%s', Inode = %d] ",i,inodes[fd[i].file_node].name,fd[i].file_node );
+        }else if(inodes[fd[i].file_node].inode_type == 1){
+            printf(" -> [fd = %d, DIR = '%s', Inode = %d] ",i,inodes[fd[i].file_node].name,fd[i].file_node );
+        }
     }
     printf("\n");
 }
@@ -480,10 +515,10 @@ int myopen(const char *pathname, int flags){
             fd[index].cursor = 0;
             fd_size++;
             int i=0;
-            while(currDir.files[i] != -1 && i<MAX_DIR_FILES){
+            while(currDir->files[i] != -1 && i<MAX_DIR_FILES){
                 i++;
             }
-            currDir.files[i] = index_check;
+            currDir->files[i] = index_check;
             return index_check;
         }
         int inode_num = allocate_file(pathname);
@@ -493,10 +528,10 @@ int myopen(const char *pathname, int flags){
         fd_size++;
 
         int i=0;
-        while(currDir.files[i] != -1 && i<MAX_DIR_FILES){
+        while(currDir->files[i] != -1 && i<MAX_DIR_FILES){
             i++;
         }
-        currDir.files[i] = inode_num;
+        currDir->files[i] = inode_num;
         
         return index;
     }
@@ -616,30 +651,42 @@ off_t mylseek(int myfd, off_t offset, int whence){
     }
 }
 
+
+
 myDIR *myopendir(const char *name){
     int dir_inode = find_file_inode(name);
-    
     // Check if this name exists but it is a file -> eror.
-    if(inodes[dir_inode].inode_type == 0){
-        printf("Cant Open File as Dir.\n");
+    if(dir_inode == -1){
+        int dir_inode = allocate_dir(name);
+        myDIR* dir;
+        strcpy(dir->d_name,name);
+        int i;
+        for(i=0; i<MAX_DIR_FILES; i++){
+            dir->d_name[i] = -1;
+        }
+        dir->inode_num = dir_inode;
+        
+        char* data = (char*) dir;
+
+        for(int i=0; i<sizeof(myDIR); i++){
+            write_byte(dir_inode, i, data);
+        }
+
+        int index = find_empty_fd();
+        fd[index].file_node = dir_inode;
+        fd[index].permission = 0;
+        fd_size++;
+        return dir;
+    }
+    else if(inodes[dir_inode].inode_type == 0){
+        printf("Cant Open File as Dir (type: %d, inode:%d).\n",inodes[dir_inode].inode_type,dir_inode);
     }
     // Check if this Dir exists.
     else if(inodes[dir_inode].inode_type == 1){
         myDIR* data ;
-        data = (char *) read_byte(dir_inode, 0, sizeof(myDIR));
+        data = (myDIR*) read_byte(dir_inode, 0, sizeof(myDIR));
         
     }   
-    if(dir_inode == -1){
-        int dir_inode = allocate_dir(name);
-        myDIR dir;
-        strcpy(dir.d_name,name);
-        int i;
-        for(i=0; i<MAX_DIR_FILES; i++){
-            dir.files[i] = -1;
-        }
-        dir.inode_num = dir_inode;
-        
-    }
     return NULL;
 }
 

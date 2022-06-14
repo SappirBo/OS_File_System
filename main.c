@@ -96,13 +96,14 @@ int main()
 
     printf("Test7: Lets make DIR \n");
     myDIR *dir = myopendir("dir1");
+    print_fd();
 
 
 
 
     sync_fs("myFile.txt");
     printf("\n");
-    // fs_info();
+    fs_info();
     printf("\n");
     printf("Done.\nOUT\n");
     return 0;
