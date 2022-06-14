@@ -5,15 +5,20 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "file_system.h"
+#include <errno.h>
+
 
 // init for the structs.
 struct super_block sb;
 struct inode *inodes;
-struct block *blocks; 
+struct block *blocks;
 
 // init for the file descriptor struct
 struct myopenfile *fd;
 int fd_size;
+
+//
+myDIR currDir;
 
 
 /**
@@ -60,10 +65,10 @@ void create_fs(int size_bytes)
 
 
 // load file system.
-void mount_fs(const char *source, const char *target)
+void mount_fs(const char *source)
 {
     FILE *file;
-    file = fopen("myFile.txt","r");
+    file = fopen(source,"r");
 
     if(file == NULL){
         perror("No Such File!\nOUT.\n");
@@ -107,69 +112,44 @@ void sync_fs(const char *str)
     fclose(file);
 }
 
-// read the file system.
-void re_sync_fs(const char *str){
-    
-    FILE *file;
-    file = fopen(str,"r");
-    int i;
-
-    // Read the Super Block Data from the file.
-    fread(&sb,sizeof(struct super_block) ,1 ,file);
-    
-    // Allocate a memory for the inodes and the blocks (as specified in the super block).
-    inodes = malloc(sizeof(struct inode) * sb.num_inodes);
-    blocks = malloc(sizeof(struct block) * sb.num_blocks);
-
-    // Inodes
-    for(i=0; i<sb.num_inodes; i++){
-        fread(&(inodes[i]), sizeof(struct inode), 1, file);
-    }
-
-    // Blocks
-    for(i=0; i<sb.num_blocks; i++){
-        fread(&(blocks[i]), sizeof(struct block), 1, file);
-    }
-
-    fclose(file);
-}
 
 /**
  * @brief After creating new file system we will want to add it a root directory,
  * THis function will add root dir (mydirent) to the file system.
  */
 void add_root(){
-    // if( inodes[FIRST_INODE].inode_type != 0 ){
-    //     errno("Init Failed.\n");
-    //     exit(1);
-    // }
-    // else if ( inodes[FIRST_INODE].inode_type == 1 && inodes[FIRST_INODE].name == "root"){
-    //     printf("root allready exists.\n");
-    // }
+    if( inodes[FIRST_INODE].inode_type != -1 ){
+        printf("Init Failed.\n");
+        exit(1);
+    }
+    else if ( inodes[FIRST_INODE].inode_type == 1 && inodes[FIRST_INODE].name == "root"){
+        printf("root allready exists.\n");
+    }
 
+    // Creating new dir 'root' and setting it's values.
+    myDIR root;
+    int i;
+    int index = allocate_dir("root");
+    if(index != FIRST_INODE){
+        printf("Init Failed, the first inode avalibale is %d.\n",index);
+        exit(1);
+    }
+    strcpy(root.d_name , "root");
+    for(i=0; i<MAX_DIR_FILES; i++){
+        root.files[i] = -1 ; // Means there is no files there.
+    }
+    root.inode_num = index;
+    char* data = root.d_name;
+    for(i=0; i<MAX_DIR_FILES; i++){
+        data += (char) root.files[i]; 
+    }
+    data += (char) root.inode_num;
 
-    // // Creating new dir 'root' and setting it's values.
-    // myDIR root;
-    // int i;
-    // int index = allocate_file("root");
-    // if(index != FIRST_INODE){
-    //     errno("Init Failed.\n");
-    //     exit(1);
-    // }
-    // strcpy(root.d_name , "root");
-    // for(i=0; i<MAX_DIR_FILES; i++){
-    //     root.files[i] = -1 ; // Means there is no files there.
-    // }
-    // root.inode_num = index;
-    // char* data = root.d_name;
-    // for(i=0; i<MAX_DIR_FILES; i++){
-    //     data += (char) root.files[i]; 
-    // }
-    // data += (char) root.inode_num;
-
-    // for(i=0; i<sizeof(myDIR); i++){
-    //     write_byte("root",1, data[i]);
-    // }
+    for(i=0; i<sizeof(myDIR); i++){
+        write_byte(FIRST_INODE,0, &data[i]);
+    }
+    
+    currDir = root;
 }
 
 
@@ -294,6 +274,24 @@ int allocate_file(const char *file_name)
     return em_inode;
 }
 
+int allocate_dir(const char *file_name)
+{
+    char name[8];
+    for(int i=0; i<8; i++){
+        name[i] = file_name[i];
+    }
+    // Find empty inode and empty block.
+    int em_inode = find_empty_inode();
+    int em_block = find_empty_block();
+
+    inodes[em_inode].first_block = em_block;
+    inodes[em_inode].inode_type = 1;
+    strcpy(inodes[em_inode].name,name);
+    blocks[em_block].next_block = -2;
+
+    return em_inode;
+}
+
 /**
  * @brief Helper for set_file_size 
  *      -> after finish resetting the size, we will look for empty blocks that we can reuse.
@@ -402,39 +400,37 @@ void print_fd(){
 
 void mymkfs(int bytes){
     create_fs(bytes);
-    sync_fs("myFile.txt");
+    add_root();
 }
 
 int mymount(const char *source, const char *target,const char *filesystemtype, unsigned long mountflags, const void *data)
 {
-    mount_fs(source,target);
-
-    // if (source == NULL && target == NULL){
-    //     // In this case we got bad input, return -1 for failure.
-    //     return -1;
-    // }
-    // else if ( source == NULL){
-    //     // In this case source is null, but target is not, so we will save target.
-    //     sync_fs(target); 
-    // }
-    // else if( access(source, F_OK) == -1){
-    //     // In case The FS Doent Exists.
-    //     return -1;
-    // } 
-    // else if (target == NULL){
-    //     // in this case target is null but source is not, we will upload the source fs.
-    //     re_sync_fs(source);
-    // }
-    // // Check if the file system allready exists -> source is the file system name.
-    // else{
-    //     // In case the FS soesn't exists, we will create new one.
-    //     create_fs(KB*16);
-    //     // IN CASE THE fs isn't exists' we will create one.
-    //     sync_fs(source);
-    // }
-     
-    
-    // printf("       File System created, name: %s\n", source);
+    if (source == NULL && target == NULL){
+        // In this case we got bad input, return -1 for failure.
+        return -1;
+    }
+    else if ( target != NULL && source == NULL){
+        // In this case source is null, but target is not, so we will save target.
+        mymkfs(KB*16); // Create FS with 16 KB.
+        sync_fs(target); 
+        return 0;
+    }
+    else if( access(source, F_OK) == -1){
+        // In case The FS Doent Exists.
+        return -1;
+    } 
+    else if (source != NULL && target == NULL){
+        // in this case target is null but source is not, we will upload the source fs.
+        mount_fs(source);
+        return 0;
+    }
+    // Check if the file system allready exists -> source is the file system name.
+    else{
+        mount_fs(source);
+        sync_fs(target);
+        return 0;
+    }
+    return -1;
 }
 
 /**
@@ -449,12 +445,20 @@ int mymount(const char *source, const char *target,const char *filesystemtype, u
  */
 int myopen(const char *pathname, int flags){
     // TODO: Check pathname validation.
+    
+
     if(flags == O_CREAT){
         int inode_num = allocate_file(pathname);
         int index = find_empty_fd();
         fd[index].file_node = inode_num;
         fd[index].cursor = 0;
         fd_size++;
+
+        int i=0;
+        while(currDir.files[i] != -1 && i<MAX_DIR_FILES){
+            i++;
+        }
+        currDir.files[i] = index;
         return index;
     }
     // Flag for getting Existing file.
@@ -480,7 +484,7 @@ int myopen(const char *pathname, int flags){
     }else{
         // Something went wrong.
         return -1;
-    } 
+    }
 }
 
 /**

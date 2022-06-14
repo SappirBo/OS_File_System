@@ -4,6 +4,7 @@
 #include <fcntl.h> 
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 #pragma once
 
@@ -92,7 +93,6 @@ struct mydirent {
 void create_fs(int size_bytes); // initialize new file system.
 void mount_fs(); // load file system.
 void sync_fs(const char *str); // write the file system.
-void re_sync_fs(const char *str); // read the file system.
 
 /**
  * @brief After creating new file system we will want to add it a root directory,
@@ -119,6 +119,8 @@ int find_empty_block();
 
 // return filenumber
 int allocate_file(const char *file_name);
+
+int allocate_dir(const char *file_name);
 
 /**
  * @brief Set / Reset the size of the file.

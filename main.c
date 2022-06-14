@@ -7,9 +7,19 @@
 
 int main()
 {   
-    char *data = "This is the data Iwant to add!\0";
+    /**
+     * First we will check the mkfs and mount functions,
+     * we will creat 16 KB fs then mount it as 'myData.txt'.
+     * we will do some operations on myData.txt and then use mount again to copy the data in 'myData.txt'
+     * to a new file system 'myFile.txt'; 
+     */
+
     mymkfs(KB*16);
-    mymount("myFile.txt", NULL,NULL,0,NULL);
+    mymount(NULL, "myData.txt",NULL,0,NULL);
+
+
+    myopen("root/file1",O_CREAT);
+
     // // Test 1 : Creating New File System (FS).
     // printf("Test1: Creating new File System.\n");
     // mymkfs(1024*16);
@@ -33,8 +43,6 @@ int main()
     // printf("       Locations in FD: 'file1' = %d, 'file2' = %d, 'file3' = %d\n",f1,f2,f3);
     // printf("       --------------------------------------------------------------------------\n");
 
-
-    // sync_fs("myFile.txt");
 
     // // Test 4: Using myclose to close file2. 
     // printf("\n");
@@ -76,13 +84,17 @@ int main()
     // cursor = myread(f3,test, 24);
     // printf("\n       read the content in file3: %s\n",test);
     // printf("       file 3 cursor at: %d",cursor);
+    // printf("       --------------------------------------------------------------------------\n");
+
+    // printf("Test7: Lets make DIR \n");
+
 
 
 
 
     // sync_fs("myFile.txt");
-    // printf("\n");
-    // // fs_info();
+    printf("\n");
+    fs_info();
     printf("\n");
     printf("Done.\nOUT\n");
     return 0;
