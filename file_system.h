@@ -10,6 +10,9 @@
 #define BLOCKSIZE 508
 #define PATH_MAX 256
 #define MAX_DIR_FILES 20
+#define KB 1024
+#define NAME_SIZE 8
+#define FIRST_INODE 0
 
 /**
  * @brief Super Block Struct, it contains 3 parameters:
@@ -34,7 +37,7 @@ struct super_block
 struct inode{
     int size;
     int first_block;
-    char name[8];
+    char name[NAME_SIZE];
     int inode_type; // 0 for file, 1 for dir, -1 if not initialize.
 };
 
@@ -58,9 +61,44 @@ struct myopenfile{
     int permission; // 
 };
 
+/**
+ * @brief DIR struct, 
+ * 
+ */
+typedef struct myDIR {
+    char d_name[NAME_SIZE];
+    int files[MAX_DIR_FILES];
+    int inode_num;
+}myDIR;
+
+struct mydirent {
+    /* File position within stream */
+    long d_off;
+
+    /* Structure size */
+    unsigned short d_reclen;
+
+    /* Length of name without \0 */
+    size_t d_namlen;
+
+    /* File type */
+    int d_type;
+
+    /* File name */
+    char d_name[NAME_SIZE];
+};
+
+
 void create_fs(int size_bytes); // initialize new file system.
 void mount_fs(); // load file system.
-void sync_fs(const char *str); // write in the file system.
+void sync_fs(const char *str); // write the file system.
+void re_sync_fs(const char *str); // read the file system.
+
+/**
+ * @brief After creating new file system we will want to add it a root directory,
+ * THis function will add root dir (mydirent) to the file system.
+ */
+void add_root();
 
 void fs_info(); // For printing fd information.
 
@@ -99,36 +137,6 @@ void * read_byte(int file_num, int pos, size_t length);
 // This part holds the functions Signatures as given in the task info.
 //////////////////////////////////////////////////////////////////////////////////
 
-/**
- * @brief DIR struct, 
- * 
- */
-typedef struct myDIR {
-    char d_name[PATH_MAX+1];
-    int files[MAX_DIR_FILES];
-    int inode_num;
-    // struct mydirent ent;
-}myDIR;
-
-struct mydirent {
-    /* Always zero */
-    long d_ino;
-
-    /* File position within stream */
-    long d_off;
-
-    /* Structure size */
-    unsigned short d_reclen;
-
-    /* Length of name without \0 */
-    size_t d_namlen;
-
-    /* File type */
-    int d_type;
-
-    /* File name */
-    char d_name[PATH_MAX+1];
-};
 
 void print_fd();
 
