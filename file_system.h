@@ -132,13 +132,14 @@ void set_file_size(int file_num, int file_size);
 
 void write_byte(int file_num, int offset, char *data);
 
-void * read_byte(int file_num, int pos, size_t length);
+char* read_byte(int file_num, int pos, size_t length);
 
 //////////////////////////////////////////////////////////////////////////////////
 //                   IMPLEMENTION OF TASK 7.
 // This part holds the functions Signatures as given in the task info.
 //////////////////////////////////////////////////////////////////////////////////
 
+void print_curr_dir();
 
 void print_fd();
 

@@ -13,7 +13,7 @@ file_system.o: file_system.c file_system.h
 
 # This clean will clear all the o/a/main files but not the txt files.
 clean:
-	rm -f *.o *.a  main
+	rm -f *.o *.a  main *.txt
 # This Clean is for all the Files.
 cleanall:
 	rm -f *.o *.a  main *.txt

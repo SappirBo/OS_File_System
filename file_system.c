@@ -148,7 +148,6 @@ void add_root(){
     for(i=0; i<sizeof(myDIR); i++){
         write_byte(FIRST_INODE,0, &data[i]);
     }
-    
     currDir = root;
 }
 
@@ -365,7 +364,7 @@ void write_byte(int file_num, int pos, char *data)
     inodes[file_num].size++;
 }
 
-void * read_byte(int file_num, int pos, size_t length){
+char * read_byte(int file_num, int pos, size_t length){
     // Find the right block.
     int block = pos/BLOCKSIZE;
     //Get this block's number.
@@ -373,10 +372,10 @@ void * read_byte(int file_num, int pos, size_t length){
     int offset = pos % BLOCKSIZE;
     
     char *data;
-    data = malloc(sizeof(char)* length);
+    data = malloc(length);
     int i;
     for(i=0; i<length; i++){
-        data[i] = (char) blocks[block_num].data[offset+i];
+        data[i] = blocks[block_num].data[offset+i];
     }
     return data;
 }
@@ -386,6 +385,15 @@ void * read_byte(int file_num, int pos, size_t length){
 // This part holds the functions Signatures as given in the task info.
 //////////////////////////////////////////////////////////////////////////////////
 
+void print_curr_dir(){
+    printf("Directory Name: %s, Inode: %d,  Files:\n",currDir.d_name, currDir.inode_num);
+    int i;
+    for(i=0;i<MAX_DIR_FILES;i++){
+        if(currDir.files[i]!= -1){
+            printf("    %d. %s\n",i,inodes[currDir.files[i]].name);
+        }
+    }
+}
 
 void print_fd(){
     printf("       File Descriptor: size = %d\n",fd_size);
@@ -446,8 +454,38 @@ int mymount(const char *source, const char *target,const char *filesystemtype, u
 int myopen(const char *pathname, int flags){
     // TODO: Check pathname validation.
     
+    // char* token =  strtok(pathname,'/');
+    // char* tmp_token;
+    // while(token != NULL){
+    //     tmp_token = token;
+    //     if(find_file_inode(tmp_token) == -1){
+    //         printf("Wrong Path!\n");
+    //         return -1;
+    //     }else if(inodes[find_file_inode(tmp_token)].inode_type == 0){
+    //         printf("Path include files (illegal action)\n");
+    //         return -1;
+    //     }else{
+            
+    //     }
+
+    //     token = strtok(NULL, " ");
+    // }
+    
 
     if(flags == O_CREAT){
+        int index_check = find_file_inode(pathname);
+        if( index_check !=  -1){
+            int index = find_empty_fd();
+            fd[index].file_node = index_check;
+            fd[index].cursor = 0;
+            fd_size++;
+            int i=0;
+            while(currDir.files[i] != -1 && i<MAX_DIR_FILES){
+                i++;
+            }
+            currDir.files[i] = index_check;
+            return index_check;
+        }
         int inode_num = allocate_file(pathname);
         int index = find_empty_fd();
         fd[index].file_node = inode_num;
@@ -458,13 +496,14 @@ int myopen(const char *pathname, int flags){
         while(currDir.files[i] != -1 && i<MAX_DIR_FILES){
             i++;
         }
-        currDir.files[i] = index;
+        currDir.files[i] = inode_num;
+        
         return index;
     }
     // Flag for getting Existing file.
     else if(flags == O_RDONLY || flags == O_WRONLY || flags == O_RDWR){
         if(fd_size == 0){
-            perror("No File found. Try diffrent pathname.\n");
+            perror("No File found, fd Empty.\n");
         }else{
             int inode_num = find_file_inode(pathname);
             if (inode_num == -1){
@@ -483,6 +522,7 @@ int myopen(const char *pathname, int flags){
         }
     }else{
         // Something went wrong.
+        printf("Eror: Can't Open File.\n");
         return -1;
     }
 }
@@ -506,20 +546,31 @@ int myclose(int myfd){
     }
 }
 
-ssize_t myread(int myfd, void *buf, size_t count){\
-    // Checking for valid fd ID and that the fd have some files in it.
-    if(fd[myfd].file_node == -1 || fd_size == 0){return -1;}
-    // Checking for Right permission.
-    else if(fd[myfd].permission == 0 || fd[myfd].permission == 2){
-        int inode_num = fd[myfd].file_node;
-        int cursor = fd[myfd].cursor;
 
-        strcpy(buf,read_byte(inode_num, cursor, count));
-        fd[myfd].cursor = cursor + count;
-        return strlen(buf);
+ssize_t myread(int myfd, void *buf, size_t count){
+    // Checking for valid fd ID and that the fd have some files in it.
+    if(fd[myfd].file_node == -1 || fd_size == 0){
+        printf("Eror, file is not allocated (fd code: %d, fd size: %d)\n",fd[myfd].file_node,fd_size);
+        return -1;
     }
-    // In case something went wrong 
-    else{return -1;}
+    if(inodes[fd[myfd].file_node].inode_type == 0){
+        // Checking for Right permission.
+        if(fd[myfd].permission == 0 || fd[myfd].permission == 2){
+            int inode_num = fd[myfd].file_node;
+            if(count+fd[myfd].cursor > inodes[inode_num].size){
+                count = inodes[inode_num].size - fd[myfd].cursor;
+            }
+            int cursor = fd[myfd].cursor;
+            strcpy(buf,read_byte(inode_num, cursor, count));
+            fd[myfd].cursor = cursor + count;
+            return strlen(buf);
+        }
+        // In case something went wrong 
+        else{
+            printf("Eror: Premission Denied.\n");
+            return -1;
+        }
+    }
 }
 
 ssize_t mywrite(int myfd, const void *buf, size_t count){
@@ -530,10 +581,9 @@ ssize_t mywrite(int myfd, const void *buf, size_t count){
         int inode_num = fd[myfd].file_node;
         int cursor = fd[myfd].cursor;
         size_t i;
-        char *data;
-        data = (char*) buf;
+        char *data = (char*) buf; // Cast to Bytes.
         for(i=0; i<count; i++){
-            write_byte(inode_num, cursor+i, &(data[i]));
+            write_byte(inode_num, cursor+i,&data[i]);
         }      
         fd[myfd].cursor = cursor+count;
         return count;
@@ -541,7 +591,6 @@ ssize_t mywrite(int myfd, const void *buf, size_t count){
     // In case something went wrong 
     return -1;
 }
-
 
 // TODO: Check Valid Offset. 
 off_t mylseek(int myfd, off_t offset, int whence){
@@ -569,24 +618,36 @@ off_t mylseek(int myfd, off_t offset, int whence){
 
 myDIR *myopendir(const char *name){
     int dir_inode = find_file_inode(name);
-    if (dir_inode == -1){
-        myDIR dr;
-        int inode_num = allocate_file(name);
-        int index = find_empty_fd();
-        fd[index].file_node = inode_num;
-        fd[index].cursor = 0;
-        fd_size++;
-
-        // Copy the DIR name.
-        strcpy(dr.d_name,name);
-        // Setting all the DIR's files (save their inode) to -1 -> for empty space.
-        int i;
-        for(i=0; i<MAX_DIR_FILES; i++){
-            dr.files[i] = -1;
-        }
-
-
+    
+    // Check if this name exists but it is a file -> eror.
+    if(inodes[dir_inode].inode_type == 0){
+        printf("Cant Open File as Dir.\n");
     }
+    // Check if this Dir exists.
+    else if(inodes[dir_inode].inode_type == 1){
+        void* data ;
+        data = read_byte(dir_inode, 0, sizeof(myDIR));
+        // printf("%s\n\n",data);
+        
+    }   
+    // if (dir_inode == -1){
+    //     myDIR dr;
+    //     int inode_num = allocate_file(name);
+    //     int index = find_empty_fd();
+    //     fd[index].file_node = inode_num;
+    //     fd[index].cursor = 0;
+    //     fd_size++;
+
+    //     // Copy the DIR name.
+    //     strcpy(dr.d_name,name);
+    //     // Setting all the DIR's files (save their inode) to -1 -> for empty space.
+    //     int i;
+    //     for(i=0; i<MAX_DIR_FILES; i++){
+    //         dr.files[i] = -1;
+    //     }
+
+
+    // }
     return NULL;
 }
 
