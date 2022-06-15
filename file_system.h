@@ -129,18 +129,54 @@ char* read_byte(int file_num, int pos, size_t length);
 // This part holds the functions Signatures as given in the task info.
 //////////////////////////////////////////////////////////////////////////////////
 
-// void print_curr_dir();
-
+/**
+ * @brief Function for Print the FD in the current State.
+ * 
+ */
 void print_fd();
 
+/**
+ * @brief Creator of the File System.
+ * 
+ * @param bytes -> The amount of bytes we want to allocate to this file system.
+ */
 void mymkfs(int bytes);
 
+/**
+ * @brief load a file system from source and copy it to target,
+ *          if source is NULL we will just create new File System with the name of target.
+ *          if target is NULL we will just upload the file system from source.
+ *          if they both NULL -> we will return -1 for failer.         
+ *  
+ * @param source 
+ * @param target 
+ * @return int 0 for success, -1 for fail.
+ */
 int mymount(const char *source, const char *target,const char *filesystemtype, unsigned long mountflags, const void *data);
 
+/**
+ * @brief open file from are Hard Disk
+ * 
+ * @param pathname = name of the path / file we look for. 
+ * @param flags: 1. O_CREAT = Create new file.
+ *               2. O_RDONLY = Read only.
+ *               3. O_WRONLY = Write only.
+ *               4. O_RDWR = Read & Write.
+ * @return int = the number of this file in the File Descriptor.
+ */
 int myopen(const char *pathname, int flags);
 
+// Close the file we opened in the fd.
 int myclose(int myfd);
 
+/**
+ * @brief the 
+ * 
+ * @param myfd 
+ * @param buf 
+ * @param count 
+ * @return ssize_t 
+ */
 ssize_t myread(int myfd, void *buf, size_t count);
 
 ssize_t mywrite(int myfd, const void *buf, size_t count);

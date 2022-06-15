@@ -7,7 +7,6 @@
 #include "file_system.h"
 #include <errno.h>
 
-
 // init for the structs.
 struct super_block sb;
 struct inode *inodes;
@@ -16,11 +15,6 @@ struct block *blocks;
 // init for the file descriptor struct
 struct myopenfile *fd;
 int fd_size;
-
-//
-// myDIR* currDir;
-
-
 
 /**
  * @brief Create a File Descriptor
@@ -209,10 +203,6 @@ int find_index_of_inode_in_fd(int inode_num){
     }
     return -1;
 }
-
-
-
-
 
 /**
  * @brief Function for creating and allocate new file in are Hard Disk.
