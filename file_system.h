@@ -73,22 +73,12 @@ typedef struct myDIR {
 }myDIR;
 
 struct mydirent {
-    /* File position within stream */
-    long d_off;
-
-    /* Structure size */
-    unsigned short d_reclen;
-
-    /* Length of name without \0 */
-    size_t d_namlen;
-
     /* File type */
     int d_type;
 
     /* File name */
     char d_name[NAME_SIZE];
 };
-
 
 void create_fs(int size_bytes); // initialize new file system.
 void mount_fs(); // load file system.
@@ -139,7 +129,7 @@ char* read_byte(int file_num, int pos, size_t length);
 // This part holds the functions Signatures as given in the task info.
 //////////////////////////////////////////////////////////////////////////////////
 
-void print_curr_dir();
+// void print_curr_dir();
 
 void print_fd();
 
@@ -159,9 +149,9 @@ off_t mylseek(int myfd, off_t offset, int whence);
 
 myDIR *myopendir(const char *name);
 
-// struct mydirent *myreaddir(myDIR *dirp);
+struct mydirent *myreaddir(myDIR *dirp)
 
-// int myclosedir(myDIR *dirp);
+int myclosedir(myDIR *dirp);
 
 
 

@@ -18,7 +18,7 @@ struct myopenfile *fd;
 int fd_size;
 
 //
-myDIR* currDir;
+// myDIR* currDir;
 
 
 
@@ -210,71 +210,6 @@ int find_index_of_inode_in_fd(int inode_num){
     return -1;
 }
 
-/**
- * @brief After creating new file system we will want to add it a root directory,
- * THis function will add root dir (mydirent) to the file system.
- */
-void add_root(){
-    if( inodes[FIRST_INODE].inode_type != -1 ){
-        printf("Init Failed.\n");
-        exit(1);
-    }
-    else if ( inodes[FIRST_INODE].inode_type == 1 && inodes[FIRST_INODE].name == "root"){
-        printf("root allready exists.\n");
-    }
-    int root_inode = allocate_dir("root");
-    myDIR* root;
-    strcpy(root->d_name,"root");
-    int i;
-    for(i=0; i<MAX_DIR_FILES; i++){
-        root->d_name[i] = -1;
-    }
-    root->inode_num = root_inode;
-    
-    char* data = (char*) root;
-
-    for(int i=0; i<sizeof(myDIR); i++){
-        write_byte(root_inode, i, data);
-    }
-
-    int index = find_empty_fd();
-    fd[index].file_node = root_inode;
-    fd[index].permission = 0;
-    fd_size++;
-    // // Creating new dir 'root' and setting it's values.
-    // myDIR *root;
-    // root->inode_num = FIRST_INODE;
-    // int i;
-    // int index = allocate_dir("root");
-    // if(index != FIRST_INODE){
-    //     printf("Init Failed, the first inode avalibale is %d.\n",index);
-    //     exit(1);
-    // }
-    // strcpy(root->d_name,"root");
-    // printf("HERE\n\n\n");
-    // for(i=0; i<MAX_DIR_FILES; i++){
-    //     root->files[i] = -1 ; // Means there is no files there.
-    // }
-    // printf("HERE\n\n\n");
-    // root->inode_num = index;
-
-    // char* data = (char*) root;
-
-    // for(i=0; i<sizeof(myDIR); i++){
-    //     write_byte(FIRST_INODE,i, data);
-    // }
-    // currDir = root;
-
-    // index = find_empty_fd();
-    // if(index != 0){
-    //     printf("Init Failed.\n");
-    //     exit(1);
-    // }
-//     fd[index].file_node = FIRST_INODE;
-//     fd[index].cursor = 0;
-//     fd[index].permission = 0;
-//     fd_size++;
-}
 
 
 
@@ -285,7 +220,6 @@ void add_root(){
  * @param file_name -> Name Of the file we want to create.
  * @return int -> the inode contains this new file.
  */
- // before TEST***********char file_name[8]
 int allocate_file(const char *file_name)
 {
     char name[8];
@@ -320,6 +254,41 @@ int allocate_dir(const char *file_name)
     blocks[em_block].next_block = -2;
 
     return em_inode;
+}
+
+/**
+ * @brief After creating new file system we will want to add it a root directory,
+ * THis function will add root dir (mydirent) to the file system.
+ */
+void add_root(){
+    if( inodes[FIRST_INODE].inode_type != -1 ){
+        printf("Init Failed.\n");
+        exit(1);
+    }
+    else if ( inodes[FIRST_INODE].inode_type == 1 && inodes[FIRST_INODE].name == "root"){
+        printf("root allready exists.\n");
+    }
+    // Creating new dir 'root' and setting it's values.
+    int root_inode = allocate_dir("root");
+    myDIR dir;
+    myDIR* root = &dir;
+    strcpy(root->d_name,"root");
+    int i;
+    for(i=0; i<MAX_DIR_FILES; i++){
+        root->d_name[i] = -1;
+    }
+    root->inode_num = root_inode;
+    
+    char* data = (char*) root;
+
+    for(int i=0; i<sizeof(myDIR); i++){
+        write_byte(root_inode, i, data);
+    }
+
+    int index = find_empty_fd();
+    fd[index].file_node = root_inode;
+    fd[index].permission = 0;
+    fd_size++;
 }
 
 /**
@@ -379,7 +348,6 @@ int get_block_number(int file_num, int offset){
     
 }
 
-
 void write_byte(int file_num, int pos, char *data)
 {
     // Find the right block.
@@ -395,7 +363,7 @@ void write_byte(int file_num, int pos, char *data)
     inodes[file_num].size++;
 }
 
-char * read_byte(int file_num, int pos, size_t length){
+char* read_byte(int file_num, int pos, size_t length){
     // Find the right block.
     int block = pos/BLOCKSIZE;
     //Get this block's number.
@@ -415,16 +383,6 @@ char * read_byte(int file_num, int pos, size_t length){
 //                   IMPLEMENTION OF TASK 7.
 // This part holds the functions Signatures as given in the task info.
 //////////////////////////////////////////////////////////////////////////////////
-
-void print_curr_dir(){
-    printf("Directory Name: %s, Inode: %d,  Files:\n",currDir->d_name, currDir->inode_num);
-    int i;
-    for(i=0;i<MAX_DIR_FILES;i++){
-        if(currDir->files[i]!= -1){
-            printf("    %d. %s\n",i,inodes[currDir->files[i]].name);
-        }
-    }
-}
 
 void print_fd(){
     printf("       File Descriptor: size = %d\n",fd_size);
@@ -488,24 +446,6 @@ int mymount(const char *source, const char *target,const char *filesystemtype, u
  */
 int myopen(const char *pathname, int flags){
     // TODO: Check pathname validation.
-    
-    // char* token =  strtok(pathname,'/');
-    // char* tmp_token;
-    // while(token != NULL){
-    //     tmp_token = token;
-    //     if(find_file_inode(tmp_token) == -1){
-    //         printf("Wrong Path!\n");
-    //         return -1;
-    //     }else if(inodes[find_file_inode(tmp_token)].inode_type == 0){
-    //         printf("Path include files (illegal action)\n");
-    //         return -1;
-    //     }else{
-            
-    //     }
-
-    //     token = strtok(NULL, " ");
-    // }
-    
 
     if(flags == O_CREAT){
         int index_check = find_file_inode(pathname);
@@ -515,10 +455,10 @@ int myopen(const char *pathname, int flags){
             fd[index].cursor = 0;
             fd_size++;
             int i=0;
-            while(currDir->files[i] != -1 && i<MAX_DIR_FILES){
-                i++;
-            }
-            currDir->files[i] = index_check;
+            // while(currDir->files[i] != -1 && i<MAX_DIR_FILES){
+            //     i++;
+            // }
+            // currDir->files[i] = index_check;
             return index_check;
         }
         int inode_num = allocate_file(pathname);
@@ -528,10 +468,10 @@ int myopen(const char *pathname, int flags){
         fd_size++;
 
         int i=0;
-        while(currDir->files[i] != -1 && i<MAX_DIR_FILES){
-            i++;
-        }
-        currDir->files[i] = inode_num;
+        // while(currDir->files[i] != -1 && i<MAX_DIR_FILES){
+        //     i++;
+        // }
+        // currDir->files[i] = inode_num;
         
         return index;
     }
@@ -651,8 +591,6 @@ off_t mylseek(int myfd, off_t offset, int whence){
     }
 }
 
-
-
 myDIR *myopendir(const char *name){
     int dir_inode = find_file_inode(name);
     // Check if this name exists but it is a file -> eror.
@@ -685,7 +623,7 @@ myDIR *myopendir(const char *name){
     else if(inodes[dir_inode].inode_type == 1){
         myDIR* data ;
         data = (myDIR*) read_byte(dir_inode, 0, sizeof(myDIR));
-        
+        return data;
     }   
     return NULL;
 }
@@ -693,7 +631,9 @@ myDIR *myopendir(const char *name){
 
 
 
+struct mydirent *myreaddir(myDIR *dirp);
 
+int myclosedir(myDIR *dirp);
 
 
 

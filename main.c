@@ -23,11 +23,11 @@ int main()
 
     // Test 1 : Creating New File System (FS).
     printf("Test1: Creating new File System.\n");
-    mymkfs(1024*16);
+    mymkfs(KB*16);
     mymount("myFile.txt", NULL,NULL,0,NULL);
     printf("       --------------------------------------------------------------------------\n");
-
-    print_curr_dir();
+    
+    // print_curr_dir();
 
     // Test 2: Creating 3 new files in the FS using myopen.
     printf("Test2: Creating 3 files.\n");
@@ -38,7 +38,7 @@ int main()
     print_fd();
     printf("       --------------------------------------------------------------------------\n");
 
-    print_curr_dir();
+    // print_curr_dir();
     // myopendir("root");
 
     // Test 3: Using myopen to get back index in the fd of the files we created.
@@ -94,10 +94,10 @@ int main()
     printf("       file 3 cursor at: %d\n",cursor);
     printf("       --------------------------------------------------------------------------\n");
 
-    printf("Test7: Lets make DIR \n");
-    myDIR *dir = myopendir("dir1");
+    // printf("Test7: Lets make DIR \n");
+    myDIR *dir = myopendir("root");
     print_fd();
-
+    printf("")
 
 
 
