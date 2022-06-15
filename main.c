@@ -13,12 +13,6 @@ int main()
      * we will do some operations on myData.txt and then use mount again to copy the data in 'myData.txt'
      * to a new file system 'myFile.txt'; 
      */
-
-    // mymkfs(KB*16);
-    // mymount(NULL, "myData.txt",NULL,0,NULL);
-
-
-    // myopen("root/file1",O_CREAT);
     
 
     // Test 1 : Creating New File System (FS).
@@ -27,19 +21,17 @@ int main()
     mymount("myFile.txt", NULL,NULL,0,NULL);
     printf("       --------------------------------------------------------------------------\n");
     
-    // print_curr_dir();
+
 
     // Test 2: Creating 3 new files in the FS using myopen.
     printf("Test2: Creating 3 files.\n");
     myopen("file1",O_CREAT);
     myopen("file2",O_CREAT);
     myopen("file3",O_CREAT);
-    
     print_fd();
     printf("       --------------------------------------------------------------------------\n");
 
-    // print_curr_dir();
-    // myopendir("root");
+
 
     // Test 3: Using myopen to get back index in the fd of the files we created.
     printf("\n");
@@ -82,6 +74,9 @@ int main()
     printf("       --------------------------------------------------------------------------\n");
 
 
+
+
+
     // Test6: lseek Function.
     int cursor;
     printf("Test6: now we will use lseek to write to file3 once again, right where we stoped (we rade 12 bytes so want overide bytes already written).\n");
@@ -94,10 +89,17 @@ int main()
     printf("       file 3 cursor at: %d\n",cursor);
     printf("       --------------------------------------------------------------------------\n");
 
+
+
     // printf("Test7: Lets make DIR \n");
-    myDIR *dir = myopendir("root");
+    printf("Test7: Creating two more Directorys,  print the FD, then close one and print again (Expecting to see the empty slot):\n");
+    myDIR *dir = myopendir("newDir1");
+    myDIR *dir2 = myopendir("newDir2");
+    struct mydirent* sd;
     print_fd();
-    printf("")
+    myclosedir(dir);
+    print_fd();
+    printf("       --------------------------------------------------------------------------\n");
 
 
 

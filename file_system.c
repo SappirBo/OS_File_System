@@ -280,8 +280,7 @@ void add_root(){
     root->inode_num = root_inode;
     
     char* data = (char*) root;
-
-    for(int i=0; i<sizeof(myDIR); i++){
+    for(int i=0; i<sizeof(*root); i++){
         write_byte(root_inode, i, data);
     }
 
@@ -605,13 +604,14 @@ myDIR *myopendir(const char *name){
         dir->inode_num = dir_inode;
         
         char* data = (char*) dir;
-
+        
         for(int i=0; i<sizeof(myDIR); i++){
             write_byte(dir_inode, i, data);
         }
 
         int index = find_empty_fd();
         fd[index].file_node = dir_inode;
+        fd[index].cursor = 0;
         fd[index].permission = 0;
         fd_size++;
         return dir;
@@ -621,19 +621,63 @@ myDIR *myopendir(const char *name){
     }
     // Check if this Dir exists.
     else if(inodes[dir_inode].inode_type == 1){
-        myDIR* data ;
+        myDIR* data = malloc(sizeof(myDIR));
         data = (myDIR*) read_byte(dir_inode, 0, sizeof(myDIR));
         return data;
     }   
     return NULL;
 }
 
+struct mydirent *myreaddir(myDIR *dirp){
+    int file_index = find_file_inode(dirp->d_name);
+    if(file_index == -1){
+        printf("Dir is not Found!\n");
+        exit(1);
+    }
+    int curr_index = -1;
+    int i;
+    for(i=0; i <fd_size; i++){
+        if(fd[i].file_node == file_index){
+            curr_index = fd[i].cursor;
+            break;
+        }
+    }
+    if(curr_index == -1){printf("Dir Has No Items.");exit(1);}
+    struct mydirent m_dirent;
+    struct mydirent* ptr_dirent = &m_dirent;
+    strcpy(m_dirent.d_name ,inodes[curr_index].name);
+    m_dirent.d_type = inodes[curr_index].inode_type;
 
+    fd[i].cursor++;
 
+    return ptr_dirent;
+}
 
-struct mydirent *myreaddir(myDIR *dirp);
+int myclosedir(myDIR *dirp){
+    int inode;
+    inode = dirp->inode_num;
+    if(fd_size == 0){
+        return -1;
+    }
+    int index = -1;
+    for(int i=0; i<fd_size; i++){
+        if(fd[i].file_node == inode){
+            index = i;
+            break;
+        }
+    }
+    if(index == -1){
+        return -1;
+    }
+    else{
+        fd[index].file_node = -1;
+        fd[index].cursor = -1;
+        fd[index].permission = -1;
+        fd_size--;
 
-int myclosedir(myDIR *dirp);
+        return 0;
+    }
+}
 
 
 
