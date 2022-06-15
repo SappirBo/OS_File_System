@@ -1,15 +1,15 @@
 all: main
 
-main: main.o file_system.o
-	gcc -o main main.o file_system.o
+main: main.o myfs.o
+	gcc -o main main.o myfs.o
 
-main.o: main.c file_system.h
+main.o: main.c source/myfs.h
 	gcc -c main.c
 
-file_system.o: file_system.c file_system.h
-	gcc -c file_system.c
+myfs.o: source/myfs.c source/myfs.h
+	gcc -c source/myfs.c
 
-.PHONY: clean#.PHONY means that clean is not a file.
+.PHONY: clean #.PHONY means that clean is not a file.
 
 # This clean will clear all the o/a/main files but not the txt files.
 clean:
